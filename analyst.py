@@ -1,11 +1,15 @@
+import argparse
 from typing import List, Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
 from glob import glob
 import polars as pl
 
 
-FILE_TYPE = "csv"
-FILE_LOCATION = "data/*.csv"
+parser = argparse.ArgumentParser()
+parser.add_argument("--file_type", type=str, default="csv")
+parser.add_argument("--file_location", type=str, default="data/*.csv")
+args = parser.parse_args()
+
 
 mcp = FastMCP("analyst", dependencies=["polars"])
 
@@ -15,8 +19,8 @@ def get_files_list() -> str:
     """
     Get the list of files that are source of data
     """
-    files_list = glob(FILE_LOCATION)
-    filtered_files_list = [f for f in files_list if f.endswith(f".{FILE_TYPE}")]
+    files_list = glob(args.file_location)
+    filtered_files_list = [f for f in files_list if f.endswith(f".{args.file_type}")]
     return filtered_files_list
 
 
@@ -24,27 +28,27 @@ def read_file(file_location: str) -> pl.DataFrame:
     """
     Read the data from the given file location
     """
-    if FILE_TYPE == "csv":
+    if args.file_type == "csv":
         return pl.read_csv(file_location)
-    elif FILE_TYPE == "parquet":
+    elif args.file_type == "parquet":
         return pl.read_parquet(file_location)
     else:
-        raise ValueError(f"Unsupported file type: {FILE_TYPE}")
+        raise ValueError(f"Unsupported file type: {args.file_type}")
 
 
 def read_file_list(file_locations: List[str]) -> pl.DataFrame:
     """
     Read the data from the given file locations
     """
-    if FILE_TYPE == "csv":
+    if args.file_type == "csv":
         dfs = []
         for file_location in file_locations:
             dfs.append(pl.read_csv(file_location))
         return pl.concat(dfs)
-    elif FILE_TYPE == "parquet":
+    elif args.file_type == "parquet":
         dfs = pl.read_parquet(file_locations)
     else:
-        raise ValueError(f"Unsupported file type: {FILE_TYPE}")
+        raise ValueError(f"Unsupported file type: {args.file_type}")
 
 
 @mcp.tool()
@@ -74,3 +78,7 @@ def execute_polars_sql(file_locations: List[str], query: str) -> List[Dict[str, 
     op_df = df.sql(query)
     output_records = op_df.to_dicts()
     return output_records
+
+
+if __name__ == "__main__":
+    mcp.run()
