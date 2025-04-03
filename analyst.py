@@ -1,12 +1,12 @@
 import argparse
 from typing import List, Dict, Any, Optional
+from pydantic import Field
 from mcp.server.fastmcp import FastMCP
 from glob import glob
 import polars as pl
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--file_type", type=str, default="csv")
 parser.add_argument("--file_location", type=str, default="data/*.csv")
 args = parser.parse_args()
 
@@ -20,43 +20,60 @@ def get_files_list() -> str:
     Get the list of files that are source of data
     """
     files_list = glob(args.file_location)
-    filtered_files_list = [f for f in files_list if f.endswith(f".{args.file_type}")]
-    return filtered_files_list
+    return files_list
 
 
-def read_file(file_location: str) -> pl.DataFrame:
+def read_file(
+    file_location: str,
+    file_type: str = Field(
+        description="The type of the file to be read. Supported types are csv and parquet",
+        default="csv",
+    ),
+) -> pl.DataFrame:
     """
     Read the data from the given file location
     """
-    if args.file_type == "csv":
+    if file_type == "csv":
         return pl.read_csv(file_location)
-    elif args.file_type == "parquet":
+    elif file_type == "parquet":
         return pl.read_parquet(file_location)
     else:
-        raise ValueError(f"Unsupported file type: {args.file_type}")
+        raise ValueError(f"Unsupported file type: {file_type}")
 
 
-def read_file_list(file_locations: List[str]) -> pl.DataFrame:
+def read_file_list(
+    file_locations: List[str],
+    file_type: str = Field(
+        description="The type of the file to be read. Supported types are csv and parquet",
+        default="csv",
+    ),
+) -> pl.DataFrame:
     """
     Read the data from the given file locations
     """
-    if args.file_type == "csv":
+    if file_type == "csv":
         dfs = []
         for file_location in file_locations:
             dfs.append(pl.read_csv(file_location))
         return pl.concat(dfs)
-    elif args.file_type == "parquet":
+    elif file_type == "parquet":
         dfs = pl.read_parquet(file_locations)
     else:
-        raise ValueError(f"Unsupported file type: {args.file_type}")
+        raise ValueError(f"Unsupported file type: {file_type}")
 
 
 @mcp.tool()
-def get_schema(file_location: str) -> List[Dict[str, Any]]:
+def get_schema(
+    file_location: str,
+    file_type: str = Field(
+        description="The type of the file to be read. Supported types are csv and parquet",
+        default="csv",
+    ),
+) -> List[Dict[str, Any]]:
     """
-    Get the schema of the data file from the given file location
+    Get the schema of a single data file from the given file location
     """
-    df = read_file(file_location)
+    df = read_file(file_location, file_type)
 
     schema = df.schema
     schema_dict = {}
@@ -66,15 +83,21 @@ def get_schema(file_location: str) -> List[Dict[str, Any]]:
 
 
 @mcp.tool()
-def execute_polars_sql(file_locations: List[str], query: str) -> List[Dict[str, Any]]:
+def execute_polars_sql(
+    file_locations: List[str],
+    query: str,
+    file_type: str = Field(
+        description="The type of the file to be read. Supported types are csv and parquet",
+        default="csv",
+    ),
+) -> List[Dict[str, Any]]:
     """
     Reads the data from the given file locations. Note that file_locations
     can be a list of multiple files. However, all files must have the same schema
     and the same columns. Executes the given polars sql query and returns the result.
-    The polars sql query must use the table name as `self` to refer to the source data.
+    Note that the polars sql query must use the table name as `self` to refer to the source data.
     """
-    print(file_locations)
-    df = read_file_list(file_locations)
+    df = read_file_list(file_locations, file_type)
     op_df = df.sql(query)
     output_records = op_df.to_dicts()
     return output_records
