@@ -259,5 +259,9 @@ def execute_polars_sql(
     return output_records
 
 
-if __name__ == "__main__":
+def main():
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
