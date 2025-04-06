@@ -1,5 +1,7 @@
 MCP Analyst is an MCP server that empowers claude to analyze local CSV or Parquet files.
 
+Use this server when your dataset size is bigger than the context window or you don't want to upload full file to optimize the cost.
+
 # Installation
 
 ## Install uv
