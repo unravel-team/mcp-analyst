@@ -1,3 +1,5 @@
+# MCP Analyst
+
 MCP Analyst is an MCP server that empowers claude to analyze local CSV or Parquet files.
 
 Use this server when your dataset size is bigger than the context window or you don't want to upload full file to optimize the cost.
@@ -40,3 +42,7 @@ On MacOS: `~/Library/Application Support/Claude/claude_desktop_config.json` On W
   }
 }
 ```
+
+# How do I provide more than one CSV file?
+
+The server supports the using globs in the file location. So for example if your directory `data` has more than one csv file then you can give file-location as `<parent_path_to_data>/data/*.csv`
