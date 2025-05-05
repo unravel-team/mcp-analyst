@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/unravel-team-mcp-analyst-badge.png)](https://mseep.ai/app/unravel-team-mcp-analyst)
+
 # MCP Analyst
 
 MCP Analyst is an MCP server that empowers claude to analyze local CSV or Parquet files.
